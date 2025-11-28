@@ -1,0 +1,7 @@
+{
+  "name": "AI植物花园",
+  "description": "An interactive generative art experience where your body controls nature. Pinch to plant seeds, open your mouth to make them grow, and clench your fist to clear the garden.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
