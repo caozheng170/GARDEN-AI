@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { PlantConfig, FlowerSpecies, SpeciesSelection } from '../types';
 
 interface ControlPanelProps {
@@ -19,6 +19,9 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
     { label: '向日葵 (Sunflower)', value: FlowerSpecies.Sunflower },
   ];
 
+  // Ref to track last tap time for double-tap detection on mobile
+  const lastTapRef = useRef<number>(0);
+
   const handleDoubleClick = (e: React.MouseEvent) => {
     // Prevent closing when double-clicking interactive elements
     const target = e.target as HTMLElement;
@@ -28,9 +31,29 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
     onClose();
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    // Prevent closing when interacting with controls
+    if (target.closest('button') || target.closest('input')) {
+      return;
+    }
+
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapRef.current;
+    
+    // Detect double tap (within 300ms)
+    if (tapLength < 300 && tapLength > 0) {
+      e.preventDefault(); // Prevent default browser zoom behavior
+      onClose();
+    }
+    
+    lastTapRef.current = currentTime;
+  };
+
   return (
     <div 
       onDoubleClick={handleDoubleClick}
+      onTouchStart={handleTouchStart}
       className="absolute right-4 top-4 w-80 bg-black/60 backdrop-blur-md border border-white/20 rounded-xl p-6 text-white shadow-xl z-30 transition-all hover:bg-black/70 select-none"
     >
       <div className="flex justify-between items-start mb-4">
@@ -96,10 +119,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
         <p>🖐️ <span className="text-white">捏合手指:</span> 播种</p>
         <p>😮 <span className="text-white">张开嘴巴:</span> 生长</p>
         <p>✊ <span className="text-white">握拳5秒:</span> 清除所有</p>
-        <p className="pt-2 text-[10px] opacity-50 text-right">按 'H' 键或双击空白处隐藏</p>
+        <p className="pt-2 text-[10px] opacity-50 text-right">PC: 双击隐藏 / Mobile: 双击空白处隐藏</p>
       </div>
     </div>
   );
 };
 
 export default ControlPanel;
+    
