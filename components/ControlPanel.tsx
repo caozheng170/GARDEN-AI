@@ -126,7 +126,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
       <div className="mt-8 pt-4 border-t border-white/10 text-xs text-gray-400 space-y-2">
         <p>🖐️ <span className="text-white">捏合手指:</span> 播种</p>
         <p>😮 <span className="text-white">张开嘴巴:</span> 生长</p>
-        <p>✊ <span className="text-white">握拳5秒:</span> 清除所有</p>
+        <p>🖐️ <span className="text-white">张开五指5秒:</span> 清除所有</p>
         <p className="pt-2 text-[10px] opacity-50 text-right">PC: 双击隐藏 / Mobile: 双击空白处隐藏</p>
       </div>
     </div>

@@ -58,6 +58,6 @@ export interface InteractionState {
   pinchLocation: Point | null;
   pinchProximity: number; // 0 to 1
   mouthOpenness: number; // 0 to 1
-  isFistClenched: boolean;
-  fistTimer: number; // ms
+  isPalmOpen: boolean; // Replaced isFistClenched
+  clearTimer: number; // Replaced fistTimer, ms
 }

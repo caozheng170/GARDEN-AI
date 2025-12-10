@@ -35,8 +35,8 @@ const App: React.FC = () => {
     pinchLocation: null,
     pinchProximity: 0,
     mouthOpenness: 0,
-    isFistClenched: false,
-    fistTimer: 0,
+    isPalmOpen: false, // Updated from isFistClenched
+    clearTimer: 0,     // Updated from fistTimer
   });
   
   // Vision Models
@@ -239,24 +239,36 @@ const App: React.FC = () => {
 
     // --- HANDS Logic ---
     state.isPinching = false;
-    let anyFistDetected = false;
+    let anyPalmOpenDetected = false;
     let maxPinchProximity = 0;
 
     if (handResult.landmarks) {
-      // Pass 1: Check for ANY fist across all detected hands
+      // Pass 1: Check for Open Hand (5 Fingers Extended) across all detected hands
       for (const landmarks of handResult.landmarks) {
-         const isFingerFolded = (tipIdx: number) => {
-           // Simple distance check between fingertip and wrist
-           return Math.hypot(landmarks[tipIdx].x - landmarks[0].x, landmarks[tipIdx].y - landmarks[0].y) < 0.15;
+         // Logic: A finger is open if tip is farther from wrist than the joint before it
+         // Landmarks: 0=Wrist, 4=ThumbTip, 8=IndexTip...
+         // Comparison: Tip vs MCP(joint near palm) usually reliable
+         const isTipFartherThanJoint = (tipIdx: number, jointIdx: number) => {
+            const dTip = Math.hypot(landmarks[tipIdx].x - landmarks[0].x, landmarks[tipIdx].y - landmarks[0].y);
+            const dJoint = Math.hypot(landmarks[jointIdx].x - landmarks[0].x, landmarks[jointIdx].y - landmarks[0].y);
+            return dTip > dJoint;
          };
-         // Check if Index, Middle, Ring, Pinky are folded
-         if (isFingerFolded(8) && isFingerFolded(12) && isFingerFolded(16) && isFingerFolded(20)) {
-           anyFistDetected = true;
+
+         // Thumb(4 vs 2), Index(8 vs 5), Middle(12 vs 9), Ring(16 vs 13), Pinky(20 vs 17)
+         // Using MCP (5,9,13,17) for fingers, MCP(2) for thumb
+         if (
+             isTipFartherThanJoint(4, 2) && 
+             isTipFartherThanJoint(8, 5) && 
+             isTipFartherThanJoint(12, 9) && 
+             isTipFartherThanJoint(16, 13) && 
+             isTipFartherThanJoint(20, 17)
+         ) {
+           anyPalmOpenDetected = true;
          }
       }
 
-      // Pass 2: Check for Pinch (Only if NO fist is detected)
-      if (!anyFistDetected) {
+      // Pass 2: Check for Pinch (Only if NO Open Hand is detected)
+      if (!anyPalmOpenDetected) {
         for (const landmarks of handResult.landmarks) {
           const thumbTip = landmarks[4];
           const indexTip = landmarks[8];
@@ -282,17 +294,17 @@ const App: React.FC = () => {
 
     if (pinchCooldownRef.current > 0) pinchCooldownRef.current -= deltaTime;
 
-    // --- FIST TIMER ---
-    if (anyFistDetected) {
-      state.isFistClenched = true;
-      state.fistTimer += deltaTime;
-      if (state.fistTimer > 5000) {
+    // --- CLEAR TIMER (using Palm Open detection) ---
+    if (anyPalmOpenDetected) {
+      state.isPalmOpen = true;
+      state.clearTimer += deltaTime;
+      if (state.clearTimer > 5000) {
         explodePlants();
-        state.fistTimer = 0;
+        state.clearTimer = 0;
       }
     } else {
-      state.isFistClenched = false;
-      state.fistTimer = Math.max(0, state.fistTimer - deltaTime * 2);
+      state.isPalmOpen = false;
+      state.clearTimer = Math.max(0, state.clearTimer - deltaTime * 2);
     }
   };
 
@@ -444,11 +456,11 @@ const App: React.FC = () => {
 
     // Pinch Bar
     if (pinchBarRef.current && pinchTextRef.current) {
-      // If fist is clenched, show restricted state
-      if (state.isFistClenched) {
+      // If palm is open, show restricted state
+      if (state.isPalmOpen) {
          pinchBarRef.current.style.width = '0%';
          pinchBarRef.current.style.backgroundColor = '#64748b'; // Slate-500
-         pinchTextRef.current.innerText = '无法播种 (Fist)';
+         pinchTextRef.current.innerText = '无法播种 (Palm Open)';
          pinchTextRef.current.style.color = '#64748b';
       } else {
         const pinchPercent = state.pinchProximity * 100;
@@ -473,13 +485,13 @@ const App: React.FC = () => {
       growthTextRef.current.innerText = `${growthPercent.toFixed(0)}%`;
     }
 
-    // Clear Bar
+    // Clear Bar (Updated logic for open hand)
     if (clearBarRef.current && clearTextRef.current && clearContainerRef.current) {
-      const clearPercent = Math.min((state.fistTimer / 5000) * 100, 100);
+      const clearPercent = Math.min((state.clearTimer / 5000) * 100, 100);
       clearBarRef.current.style.width = `${clearPercent}%`;
-      clearTextRef.current.innerText = `${(state.fistTimer / 1000).toFixed(1)}s`;
+      clearTextRef.current.innerText = `${(state.clearTimer / 1000).toFixed(1)}s`;
       
-      if (state.isFistClenched) {
+      if (state.isPalmOpen) {
         clearContainerRef.current.style.borderColor = `rgba(239, 68, 68, ${0.3 + clearPercent/200})`;
         if (clearPercent >= 100) {
            clearTextRef.current.innerText = "已粉碎!";
@@ -542,11 +554,11 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Clear */}
+        {/* Clear (Updated Icon and Text) */}
         <div ref={clearContainerRef} className="bg-black/60 backdrop-blur-md rounded-lg p-3 border border-white/10 transition-colors duration-300">
           <div className="flex justify-between items-center mb-1">
             <div className="text-xs font-bold text-gray-300 uppercase flex items-center gap-1">
-              <span>✊</span> 清除 (Hold Fist)
+              <span>🖐️</span> 清除 (Open Hand)
             </div>
             <span ref={clearTextRef} className="text-xs font-mono text-red-500">0.0s</span>
           </div>
