@@ -113,6 +113,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
             <span>最高 (Max)</span>
           </div>
         </div>
+
+        {/* Explicit Hide Button */}
+        <button
+          onClick={onClose}
+          className="w-full py-2 bg-white/5 hover:bg-white/15 border border-white/10 rounded-lg text-sm text-gray-300 hover:text-white transition-all flex items-center justify-center gap-2 group"
+        >
+           <span className="opacity-70 group-hover:opacity-100">🙈</span> 隐藏面板 (Hide)
+        </button>
       </div>
       
       <div className="mt-8 pt-4 border-t border-white/10 text-xs text-gray-400 space-y-2">
@@ -126,4 +134,3 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onC
 };
 
 export default ControlPanel;
-    
