@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { FilesetResolver, FaceLandmarker, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/+esm';
+import { FilesetResolver, FaceLandmarker, HandLandmarker } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm';
 import ControlPanel from './components/ControlPanel';
 import { FlowerSpecies, PlantConfig, Seed, Plant, Particle, InteractionState } from './types';
 import { drawSeed, drawPlant, drawParticle } from './utils/drawing';
@@ -9,6 +9,7 @@ const App: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(true);
+  const [showControls, setShowControls] = useState(true);
   
   // Updated Config State (No themeColor)
   const [config, setConfig] = useState<PlantConfig>({
@@ -51,6 +52,17 @@ const App: React.FC = () => {
   // Ref for config to be accessed inside requestAnimationFrame loop
   const configRef = useRef(config);
   
+  // Handle keyboard shortcut 'H' to toggle controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'h') {
+        setShowControls(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
   // Update ref when config changes and trigger side effects (update existing plants)
   useEffect(() => {
     configRef.current = config;
@@ -82,7 +94,7 @@ const App: React.FC = () => {
     const initVision = async () => {
       try {
         const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.8/wasm"
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
 
         if (!active) return;
@@ -135,10 +147,17 @@ const App: React.FC = () => {
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.addEventListener('loadeddata', () => {
+        
+        // Robustly handle video loading
+        if (videoRef.current.readyState >= 2) {
           setLoading(false);
           predictWebcam();
-        });
+        } else {
+          videoRef.current.onloadeddata = () => {
+             setLoading(false);
+             predictWebcam();
+          };
+        }
       }
     } catch (err) {
       console.error("Camera access denied:", err);
@@ -538,7 +557,13 @@ const App: React.FC = () => {
 
       </div>
 
-      <ControlPanel config={config} onConfigChange={handleConfigChange} />
+      {showControls && (
+        <ControlPanel 
+          config={config} 
+          onConfigChange={handleConfigChange} 
+          onClose={() => setShowControls(false)}
+        />
+      )}
       
     </div>
   );

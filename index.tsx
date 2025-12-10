@@ -9,9 +9,7 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  // StrictMode can sometimes cause double-initialization issues with complex webcam/canvas logic in dev,
-  // but we'll keep it for best practices. The App logic uses refs to handle single-instantiation of models.
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  // Removed StrictMode to avoid double-initialization of MediaPipe/WebGL contexts
+  // which can cause resource locking and initialization hangs.
+  <App />
 );

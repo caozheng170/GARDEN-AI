@@ -5,9 +5,10 @@ import { PlantConfig, FlowerSpecies, SpeciesSelection } from '../types';
 interface ControlPanelProps {
   config: PlantConfig;
   onConfigChange: (newConfig: PlantConfig) => void;
+  onClose: () => void;
 }
 
-const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange }) => {
+const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange, onClose }) => {
   
   const speciesOptions: { label: string; value: SpeciesSelection }[] = [
     { label: '随机 (Random)', value: 'Random' },
@@ -19,10 +20,22 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange }) =
   ];
 
   return (
-    <div className="absolute right-4 top-4 w-80 bg-black/60 backdrop-blur-md border border-white/20 rounded-xl p-6 text-white shadow-xl z-10 transition-all hover:bg-black/70">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <span>🌿</span> 控制面板
-      </h2>
+    <div className="absolute right-4 top-4 w-80 bg-black/60 backdrop-blur-md border border-white/20 rounded-xl p-6 text-white shadow-xl z-30 transition-all hover:bg-black/70">
+      <div className="flex justify-between items-start mb-4">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <span>🌿</span> 控制面板
+        </h2>
+        <button 
+          onClick={onClose}
+          className="text-gray-400 hover:text-white hover:bg-white/10 rounded-full p-1 transition-colors"
+          title="隐藏面板 (按 'H' 重新显示)"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       
       <div className="space-y-6">
         {/* Flower Species Buttons */}
@@ -71,6 +84,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ config, onConfigChange }) =
         <p>🖐️ <span className="text-white">捏合手指:</span> 播种</p>
         <p>😮 <span className="text-white">张开嘴巴:</span> 生长</p>
         <p>✊ <span className="text-white">握拳5秒:</span> 清除所有</p>
+        <p className="pt-2 text-[10px] opacity-50 text-right">按 'H' 键隐藏/显示此面板</p>
       </div>
     </div>
   );
